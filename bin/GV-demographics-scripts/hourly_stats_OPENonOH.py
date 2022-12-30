@@ -125,8 +125,25 @@ def main():
         df4.reset_index(inplace=True)
         df4.to_csv(os.path.join("/home/reinhold/Daten/Paper_Datasets_Nov2022/results/", "hourly_OPENonOH", f"OPENonOH_Both_per_hour_{pm_id:08d}.csv"))
 
+def collect_into_one_file(dir_ : str, outfilename : str):
+    """
+    Two output files are created: one for Female, one for Male.
+    Outfilename is without extension, since the Female, Male suffix still has to be added
+    """
+    filenames = os.listdir(dir_)
+    filenames = [f for f in filenames if f.startswith("OPENonOH") and "per_hour" in f and f.endswith(".csv")]
+    df = []
+    for filename in filenames:
+        df_temp = pd.read_csv(os.path.join(dir_, filename), header=0, index_col=0)
+        df.append(df_temp)
+    df2 = pd.concat(df)    
+    df2.set_index("hour", inplace=True)
+    
+    df_male = df2[df2["gender"]=="Male"]
+    df_female = df2[df2["gender"]=="Female"]
 
-
+    df_male.to_csv(os.path.join(dir_, outfilename + "_Male" + ".csv"))
+    df_female.to_csv(os.path.join(dir_, outfilename + "_Female" + ".csv"))
 
 def test():
     dir_ = "/home/reinhold/Daten/dana_processing/OPENonOH_NS_Data/"
@@ -137,5 +154,6 @@ def test():
     show(df)
 
 if __name__ == '__main__':
-    main()
+    #main()
+    collect_into_one_file("/home/reinhold/Daten/Paper_Datasets_Nov2022/results/hourly_OPENonOH", "OPENonOH_hourly")
     #test()
