@@ -129,6 +129,9 @@ def collect_into_one_file(dir_ : str, outfilename : str):
     """
     Two output files are created: one for Female, one for Male.
     Outfilename is without extension, since the Female, Male suffix still has to be added
+
+    Jan 2022: The gender association above is not correct, but the OPENonOH complete_patient_statistics.csv has been updated in the mean time and contains the correct pm_id to gender mapping.
+    Therefore the gender is taken from the OPENonOH complete_patient_statistics.csv file.
     """
     filenames = os.listdir(dir_)
     filenames = [f for f in filenames if f.startswith("OPENonOH") and "per_hour" in f and f.endswith(".csv")]
@@ -137,8 +140,17 @@ def collect_into_one_file(dir_ : str, outfilename : str):
         df_temp = pd.read_csv(os.path.join(dir_, filename), header=0, index_col=0)
         df.append(df_temp)
     df2 = pd.concat(df)    
-    df2.set_index("hour", inplace=True)
+    #df2.set_index("hour", inplace=True)
+    df2.rename(columns={'gender': 'gender_legacy'}, inplace=True)
+    df2["pm_id"] = df2["pm_id"].astype(int)
+
+    df_complete_stats = pd.read_excel(os.path.join("/home/reinhold/Daten/Paper_Datasets_Nov2022/", r'OPENonOH complete_patient_statistics.xlsx'))
+    df_complete_stats = df_complete_stats[['id', 'gender']]
+    # change id to int
+    df_complete_stats["id"] = df_complete_stats["id"].astype(int)
     
+    df2 = df2.merge(df_complete_stats, left_on="pm_id", right_on="id", how="left")
+
     df_male = df2[df2["gender"]=="Male"]
     df_female = df2[df2["gender"]=="Female"]
 
@@ -153,7 +165,14 @@ def test():
     print(df.head())
     show(df)
 
+def test2():
+    dir_ = "/home/reinhold/Daten/Paper_Datasets_Nov2022/results/hourly_OPENonOH"
+    df_Male = pd.read_csv(os.path.join(dir_, "OPENonOH_hourly_Male.csv"), header=0, index_col=0)
+    print(df_Male[df_Male["hour"]==0].count())
+    df_Female = pd.read_csv(os.path.join(dir_, "OPENonOH_hourly_Female.csv"), header=0, index_col=0)
+    print(df_Female[df_Female["hour"]==0].count())
+
 if __name__ == '__main__':
     #main()
     collect_into_one_file("/home/reinhold/Daten/Paper_Datasets_Nov2022/results/hourly_OPENonOH", "OPENonOH_hourly")
-    #test()
+    #test2()
