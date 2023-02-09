@@ -3,7 +3,14 @@ import os
 import pandas as pd
 from pandasgui import show
 
-def main():
+def agg_per_pm_id(var="hour"):
+    """
+    This function creates a csv file with hourly statistics for the OPENonOH_NS and OPENonOH_AAPS_Uploader datasets.
+    Originally. Now it is generalized to DoW-, month-, day-aggregations.
+    """
+    # create output directory, if it does not exist
+    os.makedirs(os.path.join("/home/reinhold/Daten/Paper_Datasets_Nov2022/results/", f"{var}ly_OPENonOH"), exist_ok=True)
+
     base_dir_ = "/home/reinhold/Daten/dana_processing/"
     dir_ = [base_dir_ + "OPENonOH_NS_Data/", base_dir_ + "OPENonOH_AAPS_Uploader_Data/"]
     subdir_ = "per_measurement_csv/"
@@ -45,10 +52,20 @@ def main():
             df_temp["dateString2"] = pd.to_datetime(df_temp["dateString"], infer_datetime_format=True, utc=True)
             df2.append(df_temp)
         df3 = pd.concat(df2)
-        df3["hour"] = df3["dateString2"].dt.hour
+        
+        if var == "hour":
+            df3["hour"] = df3["dateString2"].dt.hour
+        elif var == "month":
+            df3["month"] = df3["dateString2"].dt.month
+        elif var == "day":
+            df3["day"] = df3["dateString2"].dt.day
+        elif var == "DoW":
+            df3[var] = df3["dateString2"].dt.day_of_week
+        else:
+            raise(f"var must be one of 'hour', 'month', 'day', 'DoW', it was: {var}")
         print(df3.head())
         df3.drop(["dateString", "dateString2", "noise", "date"], axis=1, inplace=True)
-        df4 = df3.groupby(["hour"], as_index=False).agg(['mean', 'std', 'count', 'min', 'max'])
+        df4 = df3.groupby([var], as_index=False).agg(['mean', 'std', 'count', 'min', 'max'])
         columns = []
         for col in df4.columns:
             columns.append(f"{col[0]}_{col[1]}")
@@ -57,7 +74,7 @@ def main():
         df4["pm_id"] = pm_id
         df4["gender"] = pm_id_gender_map[pm_id]
         df4.reset_index(inplace=True)
-        df4.to_csv(os.path.join("/home/reinhold/Daten/Paper_Datasets_Nov2022/results/", "hourly_OPENonOH", f"OPENonOH_NS_per_hour_{pm_id:08d}.csv"))       
+        df4.to_csv(os.path.join("/home/reinhold/Daten/Paper_Datasets_Nov2022/results/", f"{var}ly_OPENonOH", f"OPENonOH_NS_per_{var}_{pm_id:08d}.csv"))       
 
 
     # loop through pm_ids that are AAPS_Uploader only
@@ -73,10 +90,22 @@ def main():
             df_temp["dateString2"] = pd.to_datetime(df_temp["dateString"], infer_datetime_format=True, utc=True)
             df2.append(df_temp)
         df3 = pd.concat(df2)
-        df3["hour"] = df3["dateString2"].dt.hour
+
+
+        if var == "hour":
+            df3["hour"] = df3["dateString2"].dt.hour
+        elif var == "month":
+            df3["month"] = df3["dateString2"].dt.month
+        elif var == "day":
+            df3["day"] = df3["dateString2"].dt.day
+        elif var == "DoW":
+            df3[var] = df3["dateString2"].dt.day_of_week
+        else:
+            raise(f"var must be one of 'hour', 'month', 'day', 'DoW', it was: {var}")
+        # df3["hour"] = df3["dateString2"].dt.hour
         print(df3.head())
         df3.drop(["dateString", "dateString2", "noise", "date"], axis=1, inplace=True)
-        df4 = df3.groupby(["hour"], as_index=False).agg(['mean', 'std', 'count', 'min', 'max'])
+        df4 = df3.groupby([var], as_index=False).agg(['mean', 'std', 'count', 'min', 'max'])
         columns = []
         for col in df4.columns:
             columns.append(f"{col[0]}_{col[1]}")
@@ -85,7 +114,7 @@ def main():
         df4["pm_id"] = pm_id
         df4["gender"] = pm_id_gender_map[pm_id]
         df4.reset_index(inplace=True)
-        df4.to_csv(os.path.join("/home/reinhold/Daten/Paper_Datasets_Nov2022/results/", "hourly_OPENonOH", f"OPENonOH_NS_per_hour_{pm_id:08d}.csv"))
+        df4.to_csv(os.path.join("/home/reinhold/Daten/Paper_Datasets_Nov2022/results/", f"{var}ly_OPENonOH", f"OPENonOH_NS_per_{var}_{pm_id:08d}.csv"))
 
 
     # loop through pm_ids which occur in both datasets
@@ -111,10 +140,20 @@ def main():
             df2.append(df_temp)
 
         df3 = pd.concat(df2)
-        df3["hour"] = df3["dateString2"].dt.hour
+
+        if var == "hour":
+            df3["hour"] = df3["dateString2"].dt.hour
+        elif var == "month":
+            df3["month"] = df3["dateString2"].dt.month
+        elif var == "day":
+            df3["day"] = df3["dateString2"].dt.day
+        elif var == "DoW":
+            df3[var] = df3["dateString2"].dt.day_of_week
+        else:
+            raise(f"var must be one of 'hour', 'month', 'day', 'DoW', it was: {var}")
         print(df3.head())
         df3.drop(["dateString", "dateString2", "noise", "date"], axis=1, inplace=True)
-        df4 = df3.groupby(["hour"], as_index=False).agg(['mean', 'std', 'count', 'min', 'max'])
+        df4 = df3.groupby([var], as_index=False).agg(['mean', 'std', 'count', 'min', 'max'])
         columns = []
         for col in df4.columns:
             columns.append(f"{col[0]}_{col[1]}")
@@ -123,9 +162,9 @@ def main():
         df4["pm_id"] = pm_id
         df4["gender"] = pm_id_gender_map[pm_id]
         df4.reset_index(inplace=True)
-        df4.to_csv(os.path.join("/home/reinhold/Daten/Paper_Datasets_Nov2022/results/", "hourly_OPENonOH", f"OPENonOH_Both_per_hour_{pm_id:08d}.csv"))
+        df4.to_csv(os.path.join("/home/reinhold/Daten/Paper_Datasets_Nov2022/results/", f"{var}ly_OPENonOH", f"OPENonOH_Both_per_{var}_{pm_id:08d}.csv"))
 
-def collect_into_one_file(dir_ : str, outfilename : str):
+def collect_into_one_file(dir_ : str, outfilename : str, var : str = "hour"):
     """
     Two output files are created: one for Female, one for Male.
     Outfilename is without extension, since the Female, Male suffix still has to be added
@@ -134,7 +173,7 @@ def collect_into_one_file(dir_ : str, outfilename : str):
     Therefore the gender is taken from the OPENonOH complete_patient_statistics.csv file.
     """
     filenames = os.listdir(dir_)
-    filenames = [f for f in filenames if f.startswith("OPENonOH") and "per_hour" in f and f.endswith(".csv")]
+    filenames = [f for f in filenames if f.startswith("OPENonOH") and f"per_{var}" in f and f.endswith(".csv")]
     df = []
     for filename in filenames:
         df_temp = pd.read_csv(os.path.join(dir_, filename), header=0, index_col=0)
@@ -172,7 +211,12 @@ def test2():
     df_Female = pd.read_csv(os.path.join(dir_, "OPENonOH_hourly_Female.csv"), header=0, index_col=0)
     print(df_Female[df_Female["hour"]==0].count())
 
+def main(var : str = "hour"):
+    agg_per_pm_id(var)
+    collect_into_one_file(f"/home/reinhold/Daten/Paper_Datasets_Nov2022/results/{var}ly_OPENonOH", f"OPENonOH_{var}ly", var)
+
 if __name__ == '__main__':
-    #main()
-    collect_into_one_file("/home/reinhold/Daten/Paper_Datasets_Nov2022/results/hourly_OPENonOH", "OPENonOH_hourly")
+    var = "day"
+    main(var)
+
     #test2()
